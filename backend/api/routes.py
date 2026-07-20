@@ -11,7 +11,7 @@ from backend.models.schemas import ChatRequest, ProjectRequest
 from backend.retrieval.hybrid import search
 from backend.utils.ids import new_id
 
-router = APIRouter()
+router = APIRouter(prefix="/api")
 
 @router.get("/health")
 async def health() -> dict: return {"status": "ok", "services": "anagrama", "gemini_configured": get_settings().gemini_configured, "graph_adapter": "local"}
