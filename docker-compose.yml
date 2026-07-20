@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: anagrama
+      POSTGRES_USER: anagrama
+      POSTGRES_PASSWORD: anagrama
+    ports: ["5432:5432"]
+    volumes: [postgres_data:/var/lib/postgresql/data]
+  neo4j:
+    image: neo4j:5-community
+    environment:
+      NEO4J_AUTH: neo4j/anagrama-dev-password
+    ports: ["7474:7474", "7687:7687"]
+    volumes: [neo4j_data:/data]
+volumes:
+  postgres_data:
+  neo4j_data:
