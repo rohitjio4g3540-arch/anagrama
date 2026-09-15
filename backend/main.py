@@ -9,5 +9,15 @@ app = FastAPI(title="Anagrama API", version="0.1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
 app.include_router(router)
 
+from sqlalchemy import text
+from backend.storage.db import Base, engine
+
 @app.on_event("startup")
-async def startup() -> None: get_settings()
+async def startup() -> None:
+    settings = get_settings()
+    if settings.use_postgres:
+        with engine.connect() as conn:
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            conn.commit()
+        Base.metadata.create_all(bind=engine)
+

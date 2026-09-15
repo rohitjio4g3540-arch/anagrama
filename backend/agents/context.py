@@ -30,8 +30,8 @@ class AssembledContext:
     def citations(self) -> list[dict]:
         return [{"title": item.source.title, "source_id": item.source.id} for item in self.sources]
 
-def build_context(message: str, project_id: str | None = None) -> AssembledContext:
-    nodes = graph_context(message)
-    sources = search(message)
-    memories = memory_store.all(project_id)[-5:]
+def build_context(message: str, project_id: str | None = None, user_id: str | None = None) -> AssembledContext:
+    nodes = graph_context(message, user_id)
+    sources = search(message, user_id)
+    memories = memory_store.all(project_id, user_id)[-5:]
     return AssembledContext(message=message, project_id=project_id, nodes=nodes, sources=sources, memories=memories)

@@ -12,4 +12,10 @@ SPECIALIST_FOCUS = {
 def build_system_prompt(specialist: str) -> str:
     """One tailored system prompt per specialist, built on the shared Executive persona."""
     focus = SPECIALIST_FOCUS.get(specialist, SPECIALIST_FOCUS["Knowledge"])
-    return f"{EXECUTIVE_INSTRUCTIONS}\n\nYou are currently acting as the {specialist} specialist. {focus}"
+    return f"""{EXECUTIVE_INSTRUCTIONS}
+
+You are the {specialist} specialist.
+
+{focus}
+
+Answer the user directly. Do not show your internal thinking process."""

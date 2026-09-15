@@ -74,34 +74,83 @@ function ThinkingDots() {
   );
 }
 
+import { useSession, signIn } from "next-auth/react";
+
 export default function Home() {
+  const { data: session, status } = useSession();
   const [active, setActive] = useState("Home");
   const [prompt, setPrompt] = useState("");
   const [thinking, setThinking] = useState(false);
   const [answer, setAnswer] = useState("");
   const [events, setEvents] = useState<string[]>(["Graph context loaded", "Memory: Design system project"]);
   const [commandOpen, setCommandOpen] = useState(false);
-  const greeting = useMemo(() => new Date().getHours() < 12 ? "Good morning, Mira." : "Welcome back, Mira.", []);
+  const greeting = useMemo(() => new Date().getHours() < 12 ? `Good morning, ${session?.user?.name || "Mira"}.` : `Welcome back, ${session?.user?.name || "Mira"}.`, [session]);
 
   async function ask(event: FormEvent) {
     event.preventDefault();
     if (!prompt.trim() || thinking) return;
-    const question = prompt.trim(); setPrompt(""); setThinking(true); setAnswer(""); setEvents(["Intent classified", "Retrieving graph context", "Searching knowledge memory"]);
-    const fallback = "I found three useful paths through your knowledge: attention as architecture, friction as an intentional interface, and computation as a cultural medium. The strongest next move is to frame them as a single inquiry about how systems choreograph attention.";
+    const question = prompt.trim(); 
+    setPrompt(""); 
+    setThinking(true); 
+    setAnswer(""); 
+    setEvents(["Intent classified", "Retrieving graph context", "Searching knowledge memory"]);
+    
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/stream`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: question, project_id: "design-system" }) });
-      if (!response.ok || !response.body) throw new Error("offline");
-      const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
-      while (true) { const { done, value } = await reader.read(); if (done) break; buffer += decoder.decode(value, { stream: true }); const lines = buffer.split("\n"); buffer = lines.pop() || ""; for (const line of lines) { if (!line.startsWith("data: ")) continue; const item = JSON.parse(line.slice(6)); if (item.type === "delta") setAnswer((current) => current + item.content); if (item.type === "tool") setEvents((current) => [...current, item.name]); } }
-    } catch { for (const word of fallback.split(" ")) { await new Promise((resolve) => setTimeout(resolve, 13)); setAnswer((current) => current + (current ? " " : "") + word); } setEvents((current) => [...current, "Local knowledge workspace ready"]); }
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if ((session as any)?.accessToken) {
+        headers["Authorization"] = `Bearer ${(session as any).accessToken}`;
+      }
+      
+      const response = await fetch("/api/stream", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          message: question,
+          project_id: "design-system"
+        })
+      });
+      if (!response.ok || !response.body) throw new Error("Backend response failed");
+      
+      const reader = response.body.getReader(); 
+      const decoder = new TextDecoder(); 
+      let buffer = "";
+      
+      while (true) { 
+        const { done, value } = await reader.read(); 
+        if (done) break; 
+        buffer += decoder.decode(value, { stream: true }); 
+        const lines = buffer.split("\n"); 
+        buffer = lines.pop() || ""; 
+        for (const line of lines) { 
+          if (!line.startsWith("data: ")) continue; 
+          const item = JSON.parse(line.slice(6)); 
+          if (item.type === "delta") setAnswer((current) => current + item.content); 
+          if (item.type === "tool") setEvents((current) => [...current, item.name]); 
+        } 
+      }
+    } catch (err: any) { 
+      setAnswer(`Error: Could not connect to intelligence core (${err.message}).`); 
+    }
     setThinking(false);
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <main className="noise min-h-screen bg-[#0c0c0c] text-[#edeae3] flex items-center justify-center">
+        <div className="text-center">
+          <Logo />
+          <h1 className="mt-8 mb-4 text-2xl font-medium text-white">Welcome to Anagrama</h1>
+          <Button onClick={() => signIn()} className="bg-[#c7f36b] text-black hover:bg-[#d7ff88]">Sign In</Button>
+        </div>
+      </main>
+    );
   }
 
   return <main className="noise min-h-screen bg-[#0c0c0c] text-[#edeae3]">
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[224px] flex-col border-r border-white/10 bg-[#111111] p-4 lg:flex">
       <Logo />
       <div className="mt-9 space-y-1">{navigation.map((item) => <button key={item} onClick={() => setActive(item)} className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[13px] transition-colors ${active === item ? "text-white" : "text-white/45 hover:bg-white/5 hover:text-white/80"}`}>{active === item && <motion.span layoutId="nav-pill" className="absolute inset-0 rounded-lg bg-white/9" transition={{ type: "spring", stiffness: 380, damping: 32 }} />}<span className={`relative z-10 h-1.5 w-1.5 rounded-full ${active === item ? "bg-[#c7f36b]" : "bg-white/20"}`} /><span className="relative z-10">{item}</span></button>)}</div>
-      <div className="mt-auto border-t border-white/10 pt-4"><button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[13px] text-white/45 hover:bg-white/5"><span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px]">⌘K</span> Search everything</button><button className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[13px] text-white/45 hover:bg-white/5"><span className="h-5 w-5 rounded-full bg-gradient-to-br from-[#c7f36b] to-[#6d8f36]" /> Mira Chen</button></div>
+      <div className="mt-auto border-t border-white/10 pt-4"><button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[13px] text-white/45 hover:bg-white/5"><span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px]">⌘K</span> Search everything</button><button className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[13px] text-white/45 hover:bg-white/5"><span className="h-5 w-5 rounded-full bg-gradient-to-br from-[#c7f36b] to-[#6d8f36]" /> {session?.user?.name || "Mira Chen"}</button></div>
     </aside>
 
     <div className="lg:pl-[224px]">

@@ -15,12 +15,24 @@ class Settings(BaseModel):
     gemini_api_key: str | None = os.getenv("GEMINI_API_KEY")
     gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     gemini_fallback_model: str = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash")
+    nvidia_api_key: str | None = os.getenv("NVIDIA_API_KEY")
+    nvidia_model: str = os.getenv("NVIDIA_MODEL")
+    llm_provider: str = os.getenv("LLM_PROVIDER", "gemini")
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./storage/anagrama.db")
+    postgres_url: str | None = os.getenv("POSTGRES_URL")
+    use_postgres: bool = os.getenv("USE_POSTGRES", "false").lower() == "true"
     neo4j_uri: str | None = os.getenv("NEO4J_URI")
     # Vercel's filesystem is read-only except /tmp; VERCEL is set automatically in that runtime.
     # /tmp is ephemeral (not shared across instances/invocations) - fine for a demo, not for real persistence.
     storage_path: Path = Path(os.getenv("ANAGRAMA_STORAGE_PATH", "/tmp/uploads" if os.getenv("VERCEL") else "storage/uploads"))
     state_path: Path = Path(os.getenv("ANAGRAMA_STATE_PATH", "/tmp/anagrama-state.json" if os.getenv("VERCEL") else "storage/anagrama-state.json"))
+
+    @property
+    def active_database_url(self) -> str:
+        """Return the active database URL based on configuration."""
+        if self.use_postgres and self.postgres_url:
+            return self.postgres_url
+        return self.database_url
 
     @property
     def gemini_configured(self) -> bool:

@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   description: "An AI-native operating system for understanding.",
 };
 
+import { Providers } from "../components/providers";
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en" className={`${geist.variable} ${mono.variable} ${wordmark.variable}`}><body>{children}</body></html>;
+  return <html lang="en" className={`${geist.variable} ${mono.variable} ${wordmark.variable}`}><body><Providers>{children}</Providers></body></html>;
 }

@@ -8,3 +8,5 @@ storage/uploads/
 storage/*.json
 *.pyc
 .env.local
+.vercel
+.env*

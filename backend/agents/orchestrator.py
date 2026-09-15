@@ -15,10 +15,10 @@ def choose_specialist(message: str) -> str:
     if any(word in intent for word in ("code", "program", "debug")): return "Programming"
     return "Knowledge"
 
-async def run(message: str, project_id: str | None = None) -> AsyncIterator[dict]:
+async def run(message: str, project_id: str | None = None, user_id: str | None = None) -> AsyncIterator[dict]:
     yield {"type": "tool", "name": "retrieve_graph_context"}
     yield {"type": "tool", "name": "retrieve_hierarchical_memory"}
-    context = build_context(message, project_id)
+    context = build_context(message, project_id, user_id)
     specialist = choose_specialist(message)
     yield {"type": "handoff", "from": "Executive", "to": specialist}
     answer = (
@@ -40,9 +40,9 @@ async def run(message: str, project_id: str | None = None) -> AsyncIterator[dict
             generated = await llm.generate(system=system, prompt=prompt)
             answer = generated or answer
         except Exception as error:
-            yield {"type": "warning", "message": f"Gemini response unavailable; used local reasoning: {type(error).__name__}"}
+            yield {"type": "warning", "message": f"LLM response unavailable; used local reasoning: {type(error).__name__}"}
     for token in answer.split(" "):
         yield {"type": "delta", "content": token + " "}
-    memory.add("conversation", f"User asked: {message[:500]}", project_id)
+    memory.add("conversation", f"User asked: {message[:500]}", project_id, user_id)
     yield {"type": "tool", "name": "update_memory"}
     yield {"type": "complete", "specialist": specialist, "citations": context.citations}
