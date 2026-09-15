@@ -2,8 +2,11 @@ from backend.agents.context import build_context
 from backend.agents.orchestrator import choose_specialist
 from backend.prompts.specialists import build_system_prompt
 
-def test_build_context_returns_structured_bundle():
-    context = build_context("What connects attention and friction?", project_id=None)
+import pytest
+
+@pytest.mark.asyncio
+async def test_build_context_returns_structured_bundle():
+    context = await build_context("What connects attention and friction?", project_id=None)
     assert context.message == "What connects attention and friction?"
     assert isinstance(context.source_summary, str)
     assert isinstance(context.concept_summary, str)
