@@ -13,10 +13,6 @@
     {
       "source": "/api/(.*)",
       "destination": "/backend/main.py"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/apps/web/$1"
     }
   ]
 }
