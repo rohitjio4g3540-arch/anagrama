@@ -8,3 +8,6 @@ class LLMProvider(ABC):
 
     @abstractmethod
     async def stream(self, *, system: str, prompt: str) -> AsyncIterator[str]: ...
+
+    @abstractmethod
+    async def embed(self, text: str) -> list[float]: ...

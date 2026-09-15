@@ -18,7 +18,7 @@ def choose_specialist(message: str) -> str:
 async def run(message: str, project_id: str | None = None, user_id: str | None = None) -> AsyncIterator[dict]:
     yield {"type": "tool", "name": "retrieve_graph_context"}
     yield {"type": "tool", "name": "retrieve_hierarchical_memory"}
-    context = build_context(message, project_id, user_id)
+    context = await build_context(message, project_id, user_id)
     specialist = choose_specialist(message)
     yield {"type": "handoff", "from": "Executive", "to": specialist}
     answer = (
@@ -43,6 +43,6 @@ async def run(message: str, project_id: str | None = None, user_id: str | None =
             yield {"type": "warning", "message": f"LLM response unavailable; used local reasoning: {type(error).__name__}"}
     for token in answer.split(" "):
         yield {"type": "delta", "content": token + " "}
-    memory.add("conversation", f"User asked: {message[:500]}", project_id, user_id)
+    await memory.add("conversation", f"User asked: {message[:500]}", project_id, user_id)
     yield {"type": "tool", "name": "update_memory"}
     yield {"type": "complete", "specialist": specialist, "citations": context.citations}

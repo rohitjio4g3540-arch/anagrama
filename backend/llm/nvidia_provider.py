@@ -57,3 +57,14 @@ class NvidiaProvider(LLMProvider):
             system=system,
             prompt=prompt,
         )
+
+    def _embed(self, text: str) -> list[float]:
+        resp = self.client.embeddings.create(
+            model="nvidia/nv-embedqa-e5-v5",
+            input=[text],
+            encoding_format="float"
+        )
+        return resp.data[0].embedding
+
+    async def embed(self, text: str) -> list[float]:
+        return await asyncio.to_thread(self._embed, text)

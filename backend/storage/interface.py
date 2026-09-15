@@ -54,7 +54,7 @@ class MemoryStorageInterface(ABC):
         pass
     
     @abstractmethod
-    def add(self, tier: str, content: str, project_id: Optional[str] = None, user_id: Optional[str] = None) -> Memory:
+    async def add(self, tier: str, content: str, project_id: Optional[str] = None, user_id: Optional[str] = None) -> Memory:
         """Add a memory to storage."""
         pass
 

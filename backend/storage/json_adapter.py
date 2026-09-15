@@ -105,13 +105,17 @@ class JSONMemoryStorage(MemoryStorageInterface):
             if project_id is None or item.project_id in {None, project_id}
         ]
     
-    def add(self, tier: str, content: str, project_id: Optional[str] = None, user_id: Optional[str] = None) -> Memory:
-        memory = Memory(
+    async def add(self, tier: str, content: str, project_id: Optional[str] = None, user_id: Optional[str] = None) -> Memory:
+        from backend.utils.ids import new_id
+        from datetime import datetime
+        data = self._read()
+        mem = Memory(
             id=new_id("mem"),
             tier=tier,
             content=content,
-            project_id=project_id
+            project_id=project_id,
+            created_at=datetime.utcnow()
         )
-        items = [item.model_dump(mode="json") for item in self.all()] + [memory.model_dump(mode="json")]
-        self.path.write_text(json.dumps(items, indent=2), encoding="utf-8")
-        return memory
+        data.append(mem.model_dump(mode="json"))
+        self._write(data)
+        return mem

@@ -40,7 +40,7 @@ async def upload(file: UploadFile = File(...), user: User = Depends(get_current_
     if suffix not in permitted: raise HTTPException(415, "Demo adapter currently accepts TXT, MD, CSV, and JSON. Add parser adapters for PDF/DOCX/images.")
     target = get_settings().storage_path / f"{new_id('upload')}{suffix}"
     target.write_bytes(await file.read())
-    result = ingest_file(target, file.filename or target.name, user.id)
+    result = await ingest_file(target, file.filename or target.name, user.id)
     return {"status": result["status"], "source": result["source"].model_dump(mode="json"), "concepts": result["concepts"], "chunks": result["chunks"]}
 
 @router.get("/projects")
@@ -61,7 +61,8 @@ async def get_memory(project_id: str | None = None, user: User = Depends(get_cur
 
 @router.post("/memory")
 async def add_memory(tier: str, content: str, project_id: str | None = None, user: User = Depends(get_current_user)) -> dict: 
-    return memory.add(tier, content, project_id, user.id).model_dump(mode="json")
+    memory_entry = await memory.add(tier, content, project_id, user.id)
+    return memory_entry.model_dump(mode="json")
 
 @router.get("/search")
 async def get_search(q: str, user: User = Depends(get_current_user)) -> list[dict]: 

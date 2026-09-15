@@ -187,7 +187,7 @@ class PostgresMemoryStorage(MemoryStorageInterface):
         finally:
             db.close()
 
-    def add(self, tier: str, content: str, project_id: Optional[str] = None, user_id: Optional[str] = None) -> Memory:
+    async def add(self, tier: str, content: str, project_id: Optional[str] = None, user_id: Optional[str] = None) -> Memory:
         db = self._get_session()
         try:
             mem_id = new_id("mem")
@@ -199,6 +199,16 @@ class PostgresMemoryStorage(MemoryStorageInterface):
                 content=content,
                 project_id=project_id
             )
+            
+            # Embed content
+            from backend.llm import get_llm
+            llm = get_llm()
+            if llm:
+                try:
+                    new_mem.embedding = await llm.embed(content)
+                except Exception as e:
+                    print("Failed to embed memory:", e)
+                    
             db.add(new_mem)
             db.commit()
             

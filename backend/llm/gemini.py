@@ -32,3 +32,12 @@ class GeminiProvider(LLMProvider):
         # Gemini's synchronous streaming iterator is collected off the event loop.
         # The same fallback behavior applies to streamed UI output.
         yield await self.generate(system=system, prompt=prompt)
+
+    async def embed(self, text: str) -> list[float]:
+        def request() -> list[float]:
+            result = self.client.models.embed_content(
+                model='text-embedding-004',
+                contents=text,
+            )
+            return result.embeddings[0].values
+        return await asyncio.to_thread(request)
