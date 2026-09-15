@@ -21,6 +21,19 @@ router.include_router(auth_router, prefix="")
 @router.get("/health")
 async def health() -> dict: return {"status": "ok", "services": "anagrama", "gemini_configured": get_settings().gemini_configured, "graph_adapter": "local"}
 
+@router.get("/db_test")
+async def db_test() -> dict:
+    from backend.storage.db import engine
+    from sqlalchemy import text
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT 1")).scalar()
+            # Check if users table exists
+            table_exists = conn.execute(text("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users')")).scalar()
+            return {"status": "connected", "result": result, "users_table_exists": table_exists, "url": str(engine.url).split("@")[-1]}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
 async def stream_events(payload: ChatRequest, user: User):
     async for event in run(payload.message, payload.project_id, user.id): yield f"data: {json.dumps(event)}\n\n"
 
