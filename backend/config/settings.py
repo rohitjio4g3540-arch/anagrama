@@ -20,9 +20,12 @@ class Settings(BaseModel):
     llm_provider: str = os.getenv("LLM_PROVIDER", "gemini")
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./storage/anagrama.db")
     postgres_url: str | None = os.getenv("POSTGRES_URL")
-    use_postgres: bool = os.getenv("USE_POSTGRES", "false").lower() == "true" or bool(os.getenv("POSTGRES_URL"))
     neo4j_uri: str | None = os.getenv("NEO4J_URI")
+    
     # Vercel's filesystem is read-only except /tmp; VERCEL is set automatically in that runtime.
+    is_vercel: bool = bool(os.getenv("VERCEL"))
+    use_postgres: bool = is_vercel or os.getenv("USE_POSTGRES", "false").lower() == "true" or bool(os.getenv("POSTGRES_URL"))
+    
     # /tmp is ephemeral (not shared across instances/invocations) - fine for a demo, not for real persistence.
     storage_path: Path = Path(os.getenv("ANAGRAMA_STORAGE_PATH", "/tmp/uploads" if os.getenv("VERCEL") else "storage/uploads"))
     state_path: Path = Path(os.getenv("ANAGRAMA_STATE_PATH", "/tmp/anagrama-state.json" if os.getenv("VERCEL") else "storage/anagrama-state.json"))
@@ -30,8 +33,10 @@ class Settings(BaseModel):
     @property
     def active_database_url(self) -> str:
         """Return the active database URL based on configuration."""
-        if self.use_postgres and self.postgres_url:
-            url = self.postgres_url
+        if self.use_postgres:
+            url = self.postgres_url or os.getenv("DATABASE_URL")
+            if not url or url.startswith("sqlite"):
+                raise ValueError("PostgreSQL is required in production (VERCEL), but no POSTGRES_URL or DATABASE_URL was found!")
             if url.startswith("postgres://"):
                 url = url.replace("postgres://", "postgresql://", 1)
             return url
