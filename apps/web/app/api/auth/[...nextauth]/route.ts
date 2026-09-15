@@ -52,7 +52,11 @@ const handler = NextAuth({
       return session;
     }
   },
-  session: { strategy: "jwt" }
+  session: { strategy: "jwt" },
+  secret: process.env.NEXTAUTH_SECRET || "super-secret-next-auth-key-change-me",
+  pages: {
+    signIn: "/",
+  },
 });
 
 export { handler as GET, handler as POST };

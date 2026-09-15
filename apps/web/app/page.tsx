@@ -162,13 +162,84 @@ export default function Home() {
     setThinking(false);
   }
 
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authUsername, setAuthUsername] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+
+  async function handleAuth(e: FormEvent) {
+    e.preventDefault();
+    if (!authUsername.trim() || !authPassword.trim()) return;
+    setAuthError("");
+    setAuthLoading(true);
+
+    try {
+      if (authMode === "register") {
+        const res = await fetch("/api/user/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: authUsername, password: authPassword }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setAuthError(data.detail || "Registration failed");
+          setAuthLoading(false);
+          return;
+        }
+      }
+
+      const result = await signIn("credentials", {
+        username: authUsername,
+        password: authPassword,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setAuthError("Invalid username or password");
+      }
+    } catch (err: any) {
+      setAuthError(err.message || "Something went wrong");
+    }
+    setAuthLoading(false);
+  }
+
   if (status === "unauthenticated") {
     return (
       <main className="noise min-h-screen bg-[#0c0c0c] text-[#edeae3] flex items-center justify-center">
-        <div className="text-center">
-          <Logo />
-          <h1 className="mt-8 mb-4 text-2xl font-medium text-white">Welcome to Anagrama</h1>
-          <Button onClick={() => signIn()} className="bg-[#c7f36b] text-black hover:bg-[#d7ff88]">Sign In</Button>
+        <div className="w-full max-w-sm mx-auto">
+          <div className="flex justify-center"><Logo /></div>
+          <h1 className="mt-8 mb-6 text-2xl font-medium text-white text-center">Welcome to Anagrama</h1>
+          <form onSubmit={handleAuth} className="space-y-4">
+            <input
+              type="text"
+              placeholder="Username"
+              value={authUsername}
+              onChange={(e) => setAuthUsername(e.target.value)}
+              className="w-full rounded-lg border border-white/15 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#c7f36b]/50"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={authPassword}
+              onChange={(e) => setAuthPassword(e.target.value)}
+              className="w-full rounded-lg border border-white/15 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#c7f36b]/50"
+            />
+            {authError && <p className="text-sm text-red-400">{authError}</p>}
+            <Button
+              disabled={authLoading || !authUsername.trim() || !authPassword.trim()}
+              className="w-full bg-[#c7f36b] text-black hover:bg-[#d7ff88] disabled:opacity-50"
+            >
+              {authLoading ? "Please wait…" : authMode === "login" ? "Sign In" : "Create Account"}
+            </Button>
+          </form>
+          <p className="mt-4 text-center text-sm text-white/45">
+            {authMode === "login" ? (
+              <>Don&apos;t have an account? <button onClick={() => { setAuthMode("register"); setAuthError(""); }} className="text-[#c7f36b] hover:text-white">Register</button></>
+            ) : (
+              <>Already have an account? <button onClick={() => { setAuthMode("login"); setAuthError(""); }} className="text-[#c7f36b] hover:text-white">Sign In</button></>
+            )}
+          </p>
         </div>
       </main>
     );
