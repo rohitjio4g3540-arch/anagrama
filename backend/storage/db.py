@@ -8,7 +8,7 @@ from backend.config.settings import get_settings
 Base = declarative_base()
 settings = get_settings()
 
-if settings.use_postgres:
+if settings.use_postgres and settings.active_database_url.startswith("postgresql"):
     from pgvector.sqlalchemy import Vector
     VectorType = Vector(1536)
 else:

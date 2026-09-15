@@ -15,9 +15,13 @@ from backend.storage.db import Base, engine
 @app.on_event("startup")
 async def startup() -> None:
     settings = get_settings()
-    if settings.use_postgres:
-        with engine.connect() as conn:
-            conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-            conn.commit()
-        Base.metadata.create_all(bind=engine)
+    if settings.use_postgres and settings.active_database_url.startswith("postgresql"):
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+                conn.commit()
+            Base.metadata.create_all(bind=engine)
+            print("Successfully connected to Postgres and initialized tables.")
+        except Exception as e:
+            print(f"Failed to initialize Postgres: {e}")
 

@@ -31,7 +31,10 @@ class Settings(BaseModel):
     def active_database_url(self) -> str:
         """Return the active database URL based on configuration."""
         if self.use_postgres and self.postgres_url:
-            return self.postgres_url
+            url = self.postgres_url
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql://", 1)
+            return url
         return self.database_url
 
     @property
