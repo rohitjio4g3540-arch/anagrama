@@ -15,9 +15,9 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/token")
 
-router = APIRouter(prefix="/api/auth")
+router = APIRouter(prefix="/api/user")
 
 class UserCreate(BaseModel):
     username: str
