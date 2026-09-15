@@ -13,7 +13,8 @@ const handler = NextAuth({
         if (!credentials?.username || !credentials?.password) return null;
         
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/auth/token`, {
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://127.0.0.1:8000");
+          const res = await fetch(`${baseUrl}/api/user/token`, {
             method: 'POST',
             body: new URLSearchParams({
               username: credentials.username,
