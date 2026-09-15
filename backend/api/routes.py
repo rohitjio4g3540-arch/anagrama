@@ -32,6 +32,11 @@ async def db_test(reset: int = 0) -> dict:
             if reset == 1:
                 conn.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
                 conn.commit()
+                try:
+                    conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+                    conn.commit()
+                except Exception as e:
+                    pass
                 Base.metadata.create_all(bind=engine)
             
             result = conn.execute(text("SELECT 1")).scalar()
