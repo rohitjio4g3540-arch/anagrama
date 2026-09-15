@@ -203,35 +203,39 @@ class TestJSONMemoryStorage:
         yield storage
         storage.path = original_path
     
-    def test_add_memory(self, json_storage):
+    @pytest.mark.asyncio
+    async def test_add_memory(self, json_storage):
         """Test adding a memory."""
-        memory = json_storage.add("conversation", "Test memory content")
+        memory = await json_storage.add("conversation", "Test memory content")
         
         assert memory.id is not None
         assert memory.tier == "conversation"
         assert memory.content == "Test memory content"
         assert memory.project_id is None
     
-    def test_add_memory_with_project(self, json_storage):
+    @pytest.mark.asyncio
+    async def test_add_memory_with_project(self, json_storage):
         """Test adding a memory with project_id."""
-        memory = json_storage.add("project", "Test memory", project_id="proj_1")
+        memory = await json_storage.add("project", "Test memory", project_id="proj_1")
         
         assert memory.project_id == "proj_1"
     
-    def test_all_memories(self, json_storage):
+    @pytest.mark.asyncio
+    async def test_all_memories(self, json_storage):
         """Test retrieving all memories."""
-        json_storage.add("conversation", "Memory 1")
-        json_storage.add("knowledge", "Memory 2")
-        json_storage.add("project", "Memory 3", project_id="proj_1")
+        await json_storage.add("conversation", "Memory 1")
+        await json_storage.add("knowledge", "Memory 2")
+        await json_storage.add("project", "Memory 3", project_id="proj_1")
         
         memories = json_storage.all()
         assert len(memories) == 3
     
-    def test_filter_memories_by_project(self, json_storage):
+    @pytest.mark.asyncio
+    async def test_filter_memories_by_project(self, json_storage):
         """Test filtering memories by project_id."""
-        json_storage.add("conversation", "Memory 1")
-        json_storage.add("knowledge", "Memory 2")
-        json_storage.add("project", "Memory 3", project_id="proj_1")
+        await json_storage.add("conversation", "Memory 1")
+        await json_storage.add("knowledge", "Memory 2")
+        await json_storage.add("project", "Memory 3", project_id="proj_1")
         
         # Filter by project - returns project-specific memories plus global memories
         project_memories = json_storage.all(project_id="proj_1")

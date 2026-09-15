@@ -95,10 +95,20 @@ class JSONMemoryStorage(MemoryStorageInterface):
         self.path = Path(os.getenv("ANAGRAMA_MEMORY_PATH", default))
         self.path.parent.mkdir(parents=True, exist_ok=True)
     
-    def all(self, project_id: Optional[str] = None, user_id: Optional[str] = None) -> List[Memory]:
-        items = []
+    def _read(self) -> list:
         if self.path.exists():
-            items = json.loads(self.path.read_text(encoding="utf-8"))
+            try:
+                return json.loads(self.path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                return []
+        return []
+    
+    def _write(self, data: list) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
+    
+    def all(self, project_id: Optional[str] = None, user_id: Optional[str] = None) -> List[Memory]:
+        items = self._read()
         memories = [Memory(**item) for item in items]
         return [
             item for item in memories 

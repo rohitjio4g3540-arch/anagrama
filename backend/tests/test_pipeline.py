@@ -14,4 +14,4 @@ async def test_ingestion_updates_graph_and_retrieval():
     snapshot = graph.snapshot()
     assert result["status"] == "indexed"
     assert any(source["id"] == result["source"].id for source in snapshot["sources"])
-    assert search("attention")
+    assert await search("attention")
