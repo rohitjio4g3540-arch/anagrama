@@ -20,7 +20,7 @@ class Settings(BaseModel):
     llm_provider: str = os.getenv("LLM_PROVIDER", "gemini")
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./storage/anagrama.db")
     postgres_url: str | None = os.getenv("POSTGRES_URL")
-    use_postgres: bool = os.getenv("USE_POSTGRES", "false").lower() == "true"
+    use_postgres: bool = os.getenv("USE_POSTGRES", "false").lower() == "true" or bool(os.getenv("POSTGRES_URL"))
     neo4j_uri: str | None = os.getenv("NEO4J_URI")
     # Vercel's filesystem is read-only except /tmp; VERCEL is set automatically in that runtime.
     # /tmp is ephemeral (not shared across instances/invocations) - fine for a demo, not for real persistence.

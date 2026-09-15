@@ -25,14 +25,16 @@ async def health() -> dict: return {"status": "ok", "services": "anagrama", "gem
 async def db_test() -> dict:
     from backend.storage.db import engine
     from sqlalchemy import text
+    import os
+    env_keys = list(os.environ.keys())
     try:
         with engine.connect() as conn:
             result = conn.execute(text("SELECT 1")).scalar()
             # Check if users table exists
             table_exists = conn.execute(text("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users')")).scalar()
-            return {"status": "connected", "result": result, "users_table_exists": table_exists, "url": str(engine.url).split("@")[-1]}
+            return {"status": "connected", "result": result, "users_table_exists": table_exists, "url": str(engine.url).split("@")[-1], "env_keys": env_keys}
     except Exception as e:
-        return {"status": "error", "error": str(e)}
+        return {"status": "error", "error": str(e), "env_keys": env_keys}
 
 async def stream_events(payload: ChatRequest, user: User):
     async for event in run(payload.message, payload.project_id, user.id): yield f"data: {json.dumps(event)}\n\n"
