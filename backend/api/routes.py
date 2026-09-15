@@ -22,19 +22,30 @@ router.include_router(auth_router, prefix="")
 async def health() -> dict: return {"status": "ok", "services": "anagrama", "gemini_configured": get_settings().gemini_configured, "graph_adapter": "local"}
 
 @router.get("/db_test")
-async def db_test() -> dict:
-    from backend.storage.db import engine
+async def db_test(reset: int = 0) -> dict:
+    from backend.storage.db import engine, Base
     from sqlalchemy import text
     import os
     env_keys = list(os.environ.keys())
     try:
         with engine.connect() as conn:
+            if reset == 1:
+                conn.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
+                conn.commit()
+                Base.metadata.create_all(bind=engine)
+            
             result = conn.execute(text("SELECT 1")).scalar()
             # Check if users table exists
             table_exists = conn.execute(text("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users')")).scalar()
-            return {"status": "connected", "result": result, "users_table_exists": table_exists, "url": str(engine.url).split("@")[-1], "env_keys": env_keys}
+            
+            # Check users table columns
+            columns = []
+            if table_exists:
+                columns = [row[0] for row in conn.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name = 'users'")).fetchall()]
+                
+            return {"status": "connected", "result": result, "users_table_exists": table_exists, "columns": columns, "url": str(engine.url).split("@")[-1]}
     except Exception as e:
-        return {"status": "error", "error": str(e), "env_keys": env_keys}
+        return {"status": "error", "error": str(e)}
 
 async def stream_events(payload: ChatRequest, user: User):
     async for event in run(payload.message, payload.project_id, user.id): yield f"data: {json.dumps(event)}\n\n"
